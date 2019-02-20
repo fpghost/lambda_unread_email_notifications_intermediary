@@ -24,7 +24,7 @@ sqs_client = boto3_client('sqs', endpoint_url=endpoint_url)
 
 def handler(event, context):
     """
-    Consumes from the "resposes" queue, parses out the unread count
+    Consumes from the "responses" queue, parses out the unread count
     and then constructs SNS payload and publishes to "publish sns" SQS queue
     :param event:
     :param context:
@@ -44,7 +44,7 @@ def handler(event, context):
         try:
             apns_payload_str = json.dumps({"aps": {"alert": {"body": {"unread_count": unread_count}}}})
             payload = {'default': 'default message', 'APNS': apns_payload_str}
-            sqs_msg = {'payload': payload,
+            sqs_msg = {'sns_payload': payload,
                        'endpoint_arn': endpoint_arn}
             logger.info('SQS: Publishing {}'.format(sqs_msg))
             sqs_client.send_message(QueueUrl=sqs_publish_sns_queue_url,
