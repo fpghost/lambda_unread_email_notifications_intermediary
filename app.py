@@ -31,16 +31,19 @@ def handler(event, context):
     :return:
     """
     for record in event.get('Records', []):
-        logger.info(record['body'])
-        json_record_body = json.loads(record['body'])
+        try:
+            logger.info(record['body'])
+            json_record_body = json.loads(record['body'])
+        except (ValueError, KeyError) as exc:
+            return {'statusCode': 500, 'error': str(exc)}
         try:
             unread_count = json_record_body['body']['result_count']
         except KeyError:
-            return {'error': 'unread_count is required'}
+            return {'statusCode': 500, 'error': 'unread_count is required'}
         try:
             endpoint_arn = json_record_body['extra_data']['endpoint_arn']
         except KeyError:
-            return {'error': 'endpoint_arn is required'}
+            return {'statusCode': 500, 'error': 'endpoint_arn is required'}
         try:
             apns_payload_str = json.dumps({"aps": {"alert": {"body": {"unread_count": unread_count}}}})
             payload = {'default': 'default message', 'APNS': apns_payload_str}
@@ -51,7 +54,7 @@ def handler(event, context):
                                     MessageBody=json.dumps(sqs_msg))
             return {
                 'statusCode': 200,
-                'body': json.dumps({'payload': payload})
+                'body': json.dumps({'sqs_msg': sqs_msg})
             }
         except ClientError as exc:
             logger.error(str(exc))
