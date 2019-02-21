@@ -35,14 +35,17 @@ def handler(event, context):
             logger.info(record['body'])
             json_record_body = json.loads(record['body'])
         except (ValueError, KeyError) as exc:
+            logger.error(str(exc))
             return {'statusCode': 500, 'error': str(exc)}
         try:
             unread_count = json_record_body['body']['result_count']
         except KeyError:
+            logger.error('unread_count is required')
             return {'statusCode': 500, 'error': 'unread_count is required'}
         try:
             endpoint_arn = json_record_body['extra_data']['endpoint_arn']
         except KeyError:
+            logger.error('endpoint_arn is required')
             return {'statusCode': 500, 'error': 'endpoint_arn is required'}
         try:
             apns_payload_str = json.dumps({"aps": {"alert": {"body": {"unread_count": unread_count}}}})
